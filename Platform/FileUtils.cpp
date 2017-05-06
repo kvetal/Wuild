@@ -190,6 +190,7 @@ bool FileInfo::WriteCompressed(const ByteArrayHolder & data, CompressionInfo com
 	ByteArrayHolder uncompData;
 	try
 	{
+		Syslogger(Syslogger::Notice) << "Write " << fs::absolute(m_impl->m_path).u8string() << " with cmp=" << uint32_t(compressionInfo.m_type);
 		UncompressDataBuffer(data, uncompData, compressionInfo);
 	}
 	catch(std::exception &e)
