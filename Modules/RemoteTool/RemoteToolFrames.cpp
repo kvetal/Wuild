@@ -15,6 +15,8 @@
 
 #include <ByteOrderStream.h>
 
+#include <iomanip>
+
 namespace Wuild
 {
 
@@ -114,7 +116,22 @@ void RemoteToolResponse::LogTo(std::ostream &os) const
 	SocketFrame::LogTo(os);
 	os << " -> " << (m_result ? "OK" : "FAIL");
 	LogByteArrayHolder(m_fileData, os);
-	os << ", comp. type:" << uint32_t(m_compression.m_type);
+	os << ", comp. type:" << uint32_t(m_compression.m_type) << ", m_checkField:" <<  std::hex << m_checkField << std::dec;
+	uint32_t approxSizeHead = sizeof(m_length) + sizeof(m_created) + sizeof(m_transactionId) + sizeof(m_replyToTransactionId);
+	uint32_t approxSize = sizeof(m_result)
+			+ 4 + m_fileData.size()
+			;
+uint32_t approxSizeTail =
+			sizeof(m_fileData.m_compressedCRC)
+			+ sizeof(m_fileData.m_uncompressedCRC)
+			+ sizeof(m_fileData.m_uncompressedSize)
+			+ 4 + m_fileData.m_filename.size()
+			+ 4 + m_stdOut.size()
+			+ sizeof(m_executionTime)
+			+ sizeof(m_compression)
+			+ sizeof(m_checkField)
+			;
+	os << " approxSize:" << approxSize << "+ head " << approxSizeHead << " +tail" << approxSizeTail << " =" << (approxSize+approxSizeHead+approxSizeTail);
 }
 
 SocketFrame::State RemoteToolResponse::ReadInternal(ByteOrderDataStreamReader &stream)
@@ -124,6 +141,7 @@ SocketFrame::State RemoteToolResponse::ReadInternal(ByteOrderDataStreamReader &s
 	stream >> m_stdOut;
 	stream >> m_executionTime;
 	stream >> m_compression;
+	stream >> m_checkField;
 	return stream.EofRead() ? stIncomplete : stOk;
 }
 
@@ -134,6 +152,7 @@ SocketFrame::State RemoteToolResponse::WriteInternal(ByteOrderDataStreamWriter &
 	stream << m_stdOut;
 	stream << m_executionTime;
 	stream << m_compression;
+	stream << m_checkField;
 	return stOk;
 }
 

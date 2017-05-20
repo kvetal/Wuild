@@ -55,6 +55,7 @@ public:
 	CompressionInfo		m_compression;
 	std::string         m_stdOut;
 	TimePoint           m_executionTime;
+	uint64_t            m_checkField = 0x0102030405040302ULL;
 
 	void                LogTo(std::ostream& os) const override;
 	uint8_t             FrameTypeId() const override { return s_frameTypeId;}
