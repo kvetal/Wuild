@@ -355,6 +355,8 @@ SocketFrameHandler::ConsumeState SocketFrameHandler::ConsumeReadBuffer()
 		assert(framePos);
 		if (inputStream.ReadBlock(framePos, frameLength))
 			m_frameDataBuffer.MarkWrite(frameLength);
+		else
+			m_frameDataBuffer.SetSize(m_frameDataBuffer.GetSize() - frameLength);
 	}
 
 	return ConsumeState::Ok;
@@ -392,7 +394,7 @@ SocketFrameHandler::ConsumeState SocketFrameHandler::ConsumeFrameBuffer()
 			size_t s = m_frameDataBuffer.GetHolder().size();
 			size_t tailBytes = std::max(s, size_t(100));
 			uint8_t * tailData = m_frameDataBuffer.GetHolder().data() + s - tailBytes;
-			Syslogger(m_logContext, Syslogger::Info) << "framebuffer tail=" << Syslogger::Binary(tailData, tailBytes);
+			//Syslogger(m_logContext, Syslogger::Info) << "framebuffer tail=" << Syslogger::Binary(tailData, tailBytes);
 		}
 		// handle read frame
 		PreprocessFrame(incoming);
