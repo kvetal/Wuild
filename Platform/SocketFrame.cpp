@@ -29,6 +29,7 @@ void SocketFrame::LogTo(std::ostream &os) const
 	os << "T=" << m_transactionId;
 	if (m_replyToTransactionId != uint64_t(-1))
 		os << ", R=" << m_replyToTransactionId;
+	os << ", L=" << m_length;
 }
 
 SocketFrame::State SocketFrame::Read(ByteOrderDataStreamReader &stream)

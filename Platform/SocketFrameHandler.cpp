@@ -456,13 +456,13 @@ bool SocketFrameHandler::WriteFrames()
 			throw std::logic_error("Invalid queue logic");
 
 		ByteOrderDataStreamWriter streamWriter(m_settings.m_byteOrder);
-		Syslogger(m_logContext, Syslogger::Info) << "outgoung -> " << frontMsg;
+
 		frontMsg->Write(streamWriter);
 
 		const auto typeId = frontMsg->FrameTypeId();
 		const ByteArrayHolder & buffer = streamWriter.GetBuffer().GetHolder();
 
-		//Syslogger(m_logContext, Syslogger::Info) << "buffer -> " << streamWriter.GetBuffer().ToHex();
+		Syslogger(m_logContext, Syslogger::Info) << "outgoung -> " << frontMsg << ", buf size=" << buffer.size();
 
 		/// splitting onto segments.
 		for (size_t offset = 0; offset < buffer.size(); offset += m_settings.m_segmentSize)
@@ -557,7 +557,7 @@ bool SocketFrameHandler::IsOutputBufferEmpty()
 void SocketFrameHandler::PreprocessFrame(SocketFrame::Ptr incomingMessage)
 {
 	// if frame has reply callback, use it. Otherwise, call ProcessFrame on frameReader.
-	Syslogger(m_logContext, Syslogger::Info) << "incoming <- " << incomingMessage;
+	Syslogger(m_logContext, Syslogger::Info) << "incoming <- " << incomingMessage << ", buffer offset:" << int64_t(m_frameDataBuffer.GetOffsetRead());
 	auto notifyCallback = m_replyManager.TakeNotifier(incomingMessage->m_replyToTransactionId);
 	if (notifyCallback)
 	{
