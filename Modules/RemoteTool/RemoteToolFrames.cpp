@@ -124,7 +124,7 @@ SocketFrame::State RemoteToolResponse::ReadInternal(ByteOrderDataStreamReader &s
 	stream >> m_stdOut;
 	stream >> m_executionTime;
 	stream >> m_compression;
-	return stOk;
+	return stream.EofRead() ? stIncomplete : stOk;
 }
 
 SocketFrame::State RemoteToolResponse::WriteInternal(ByteOrderDataStreamWriter &stream) const

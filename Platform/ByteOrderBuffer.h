@@ -59,7 +59,7 @@ public:
 	/// return pointer to current read position, ensuring that buffer have at least required size after that. Otherwise, returns null.
 	inline uint8_t * PosRead(size_t required = 0)
 	{
-		if (m_posRead  + required > m_end) {
+		if (m_posRead  + required > m_end || m_eofRead) {
 			m_eofRead = true;
 			return nullptr;
 		}
@@ -86,7 +86,7 @@ public:
 
 	/// Try to resize buffer. If resize fails, return false.
 	bool SetSize(size_t sz)
-	{		
+	{
 		if (sz > GetSize() && !m_resizable)
 			return false;
 		if(sz != GetSize() && m_resizable)

@@ -221,7 +221,8 @@ bool SocketFrameHandler::ReadFrames()
 
 	m_outputAcknowledgesSize += newSize - currentSize;
 	bool validInput = true;
-
+	if (m_frameDataBuffer.GetHolder().size())
+		Syslogger(m_logContext, Syslogger::Info) << "m_frameDataBuffer.size before consume:" <<  m_frameDataBuffer.GetHolder().size();
 	// if some new data arrived, try to extract segments from it:
 	do
 	{
@@ -237,6 +238,9 @@ bool SocketFrameHandler::ReadFrames()
 		m_readBuffer.RemoveFromStart(m_readBuffer.GetOffsetRead());
 
 	} while (m_readBuffer.GetSize());
+
+	if (m_frameDataBuffer.GetHolder().size())
+		Syslogger(m_logContext, Syslogger::Info) << "m_frameDataBuffer.size after consume:" <<  m_frameDataBuffer.GetHolder().size();
 
 	m_frameDataBuffer.ResetRead();
 
@@ -557,7 +561,7 @@ bool SocketFrameHandler::IsOutputBufferEmpty()
 void SocketFrameHandler::PreprocessFrame(SocketFrame::Ptr incomingMessage)
 {
 	// if frame has reply callback, use it. Otherwise, call ProcessFrame on frameReader.
-	Syslogger(m_logContext, Syslogger::Info) << "incoming <- " << incomingMessage << ", buffer offset:" << int64_t(m_frameDataBuffer.GetOffsetRead());
+	Syslogger(m_logContext, Syslogger::Info) << "incoming <- " << incomingMessage << ", buffer offset:" << int64_t(m_frameDataBuffer.GetOffsetRead()) << ", buffer size:" << int64_t(m_frameDataBuffer.GetSize());
 	auto notifyCallback = m_replyManager.TakeNotifier(incomingMessage->m_replyToTransactionId);
 	if (notifyCallback)
 	{
