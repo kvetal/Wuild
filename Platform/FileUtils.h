@@ -97,5 +97,6 @@ public:
 
 std::string GetCWD();
 void SetCWD(const std::string & cwd);
+uint32_t CRC32(void *pData, size_t iLen);
 
 }

@@ -30,6 +30,10 @@ class ByteArrayHolder
 	std::shared_ptr<ByteArray> p;
 public:
 	ByteArrayHolder() : p(new ByteArray()) {}
+	uint64_t m_uncompressedSize = 0;
+	uint32_t m_uncompressedCRC = 0;
+	uint32_t m_compressedCRC = 0;
+	std::string m_filename;
 
 	size_t            size() const        { return p.get()->size(); }
 	void              resize(size_t size) { return p.get()->resize(size); }

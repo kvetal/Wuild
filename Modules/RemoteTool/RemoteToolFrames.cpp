@@ -37,6 +37,7 @@ inline ByteOrderDataStreamReader& ByteOrderDataStreamReader::operator >> (ByteAr
 	point.resize(this->ReadScalar<uint32_t>());
 	if (point.size())
 		this->ReadBlock(point.data(), point.size());
+	*this >> point.m_compressedCRC >> point.m_uncompressedCRC >> point.m_uncompressedSize >> point.m_filename;
 	return *this;
 }
 
@@ -47,6 +48,7 @@ inline ByteOrderDataStreamWriter& ByteOrderDataStreamWriter::operator << (const 
 	*this << filesize;
 	if (filesize)
 		this->WriteBlock(point.data(), point.size());
+	*this << point.m_compressedCRC << point.m_uncompressedCRC << point.m_uncompressedSize << point.m_filename;
 	return *this;
 }
 
@@ -68,12 +70,21 @@ inline ByteOrderDataStreamWriter& ByteOrderDataStreamWriter::operator << (const 
 	return *this;
 }
 
+void LogByteArrayHolder(const ByteArrayHolder & data, std::ostream &os)
+{
+	os  << " file: " << data.m_filename
+		<< " original[" << data.m_uncompressedSize << ", crc:" << data.m_uncompressedCRC << "]"
+		<< " comp[" << data.size() << ", crc:" << data.m_compressedCRC << "] "
+			 ;
+
+}
+
 void RemoteToolRequest::LogTo(std::ostream &os) const
 {
 	SocketFrame::LogTo(os);
 	os << " " << m_invocation.m_id.m_toolId << " args:" << m_invocation.GetArgsString(false);
-	os << " file: [" << m_fileData.size() << ", COMP:" << uint32_t(m_compression.m_type) << "]"
-		;
+	LogByteArrayHolder(m_fileData, os);
+	os << ", comp. type:" << uint32_t(m_compression.m_type);
 }
 
 SocketFrame::State RemoteToolRequest::ReadInternal(ByteOrderDataStreamReader &stream)
@@ -101,10 +112,9 @@ SocketFrame::State RemoteToolRequest::WriteInternal(ByteOrderDataStreamWriter &s
 void RemoteToolResponse::LogTo(std::ostream &os) const
 {
 	SocketFrame::LogTo(os);
-	os << " -> " << (m_result ? "OK" : "FAIL") << " ["
-	   << m_fileData.size() << ", COMP:" << uint32_t(m_compression.m_type) << "], std["
-	   << m_stdOut.size() << "]"
-		  ;
+	os << " -> " << (m_result ? "OK" : "FAIL");
+	LogByteArrayHolder(m_fileData, os);
+	os << ", comp. type:" << uint32_t(m_compression.m_type);
 }
 
 SocketFrame::State RemoteToolResponse::ReadInternal(ByteOrderDataStreamReader &stream)
