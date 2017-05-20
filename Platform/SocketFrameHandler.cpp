@@ -221,8 +221,6 @@ bool SocketFrameHandler::ReadFrames()
 
 	m_outputAcknowledgesSize += newSize - currentSize;
 	bool validInput = true;
-	if (m_frameDataBuffer.GetHolder().size())
-		Syslogger(m_logContext, Syslogger::Info) << "m_frameDataBuffer.size before consume:" <<  m_frameDataBuffer.GetHolder().size();
 	// if some new data arrived, try to extract segments from it:
 	do
 	{
@@ -239,8 +237,7 @@ bool SocketFrameHandler::ReadFrames()
 
 	} while (m_readBuffer.GetSize());
 
-	if (m_frameDataBuffer.GetHolder().size())
-		Syslogger(m_logContext, Syslogger::Info) << "m_frameDataBuffer.size after consume:" <<  m_frameDataBuffer.GetHolder().size();
+
 
 	m_frameDataBuffer.ResetRead();
 
@@ -390,6 +387,13 @@ SocketFrameHandler::ConsumeState SocketFrameHandler::ConsumeFrameBuffer()
 	}
 	else if (framestate == SocketFrame::stOk)
 	{
+		if (m_frameDataBuffer.GetHolder().size())
+		{
+			size_t s = m_frameDataBuffer.GetHolder().size();
+			size_t tailBytes = std::max(s, size_t(100));
+			uint8_t * tailData = m_frameDataBuffer.GetHolder().data() + s - tailBytes;
+			Syslogger(m_logContext, Syslogger::Info) << "framebuffer tail=" << Syslogger::Binary(tailData, tailBytes);
+		}
 		// handle read frame
 		PreprocessFrame(incoming);
 		return ConsumeState::Ok;
