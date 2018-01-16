@@ -49,6 +49,9 @@ public:
 
 	bool SetConfig(const Config & config);
 
+	/// Allow call another invoker when remote execution fails.
+	void SetInvokerFallback(IToolInvoker * invokerFallback);
+
 	/// Explicitly add new remote tool server client (used for testing)
 	void AddClient(const ToolServerInfo & info, bool start = false);
 

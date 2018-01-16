@@ -21,68 +21,69 @@
 #include <InvocationRewriter.h>
 #include <ThreadUtils.h>
 #include <Syslogger.h>
+#include <LocalExecutor.h>
+
 #include <iostream>
 
 //#define TEST_CLIENT
 #ifdef TEST_CLIENT
 #include <RemoteToolServer.h>
-#include <LocalExecutor.h>
 #endif
 
 class RemoteExecutor: public IRemoteExecutor
 {
-    Wuild::ConfiguredApplication & m_app;
-    Wuild::IInvocationRewriter::Ptr m_invocationRewriter;
-    Wuild::RemoteToolClient::Config m_remoteToolConfig;
-    std::shared_ptr<Wuild::RemoteToolClient> m_remoteService;
+	Wuild::ConfiguredApplication & m_app;
+	Wuild::IInvocationRewriter::Ptr m_invocationRewriter;
+	Wuild::RemoteToolClient::Config m_remoteToolConfig;
+	std::shared_ptr<Wuild::RemoteToolClient> m_remoteService;
+	Wuild::ILocalExecutor::Ptr m_localExecutor;
 
 #ifdef TEST_CLIENT
-    Wuild::ILocalExecutor::Ptr m_localExecutor;
-    std::shared_ptr<Wuild::RemoteToolServer> m_toolServer;
+	std::shared_ptr<Wuild::RemoteToolServer> m_toolServer;
 #endif
 
-    bool m_remoteEnabled = false;
-    bool m_hasStart = false;
-    int m_minimalRemoteTasks = 0;
+	bool m_remoteEnabled = false;
+	bool m_hasStart = false;
+	int m_minimalRemoteTasks = 0;
 
-    std::set<Edge *> m_activeEdges;
-    std::deque<Result> m_results;
-    mutable std::mutex m_resultsMutex;
+	std::set<Edge *> m_activeEdges;
+	std::deque<Result> m_results;
+	mutable std::mutex m_resultsMutex;
 
 
 public:
 
-    RemoteExecutor(Wuild::ConfiguredApplication & app);
+	RemoteExecutor(Wuild::ConfiguredApplication & app);
 
-    void SetVerbose(bool verbose);
-
-
-    bool PreprocessCode(const std::vector<std::string> & originalRule,
-                        const std::vector<std::string> & ignoredArgs,
-                        std::string & toolId,
-                        std::vector<std::string> & preprocessRule,
-                        std::vector<std::string> & compileRule) const override;
-
-    bool CheckRemotePossibleForFlags(const std::string & toolId, const std::string & flags) const override;
-    std::string GetPreprocessedPath(const std::string & sourcePath, const std::string & objectPath) const override;
-    std::string FilterPreprocessorFlags(const std::string & toolId, const std::string & flags) const override;
-
-    std::string FilterCompilerFlags(const std::string & toolId, const std::string & flags) const override;
-    void RunIfNeeded(const std::vector<std::string> & toolIds) override;
-    void SleepSome() const  override;
-    int GetMinimalRemoteTasks() const override;
-
-    bool CanRunMore() override;
-
-    bool StartCommand(Edge* userData, const std::string & command)  override;
+	void SetVerbose(bool verbose);
 
 
-    /// return true if has finished result.
-    bool WaitForCommand(Result* result) override;
+	bool PreprocessCode(const std::vector<std::string> & originalRule,
+						const std::vector<std::string> & ignoredArgs,
+						std::string & toolId,
+						std::vector<std::string> & preprocessRule,
+						std::vector<std::string> & compileRule) const override;
 
-    void Abort() override;
-    std::set<Edge*> GetActiveEdges() override;
+	bool CheckRemotePossibleForFlags(const std::string & toolId, const std::string & flags) const override;
+	std::string GetPreprocessedPath(const std::string & sourcePath, const std::string & objectPath) const override;
+	std::string FilterPreprocessorFlags(const std::string & toolId, const std::string & flags) const override;
 
-    ~RemoteExecutor();
+	std::string FilterCompilerFlags(const std::string & toolId, const std::string & flags) const override;
+	void RunIfNeeded(const std::vector<std::string> & toolIds) override;
+	void SleepSome() const  override;
+	int GetMinimalRemoteTasks() const override;
+
+	bool CanRunMore() override;
+
+	bool StartCommand(Edge* userData, const std::string & command)  override;
+
+
+	/// return true if has finished result.
+	bool WaitForCommand(Result* result) override;
+
+	void Abort() override;
+	std::set<Edge*> GetActiveEdges() override;
+
+	~RemoteExecutor();
 
 };

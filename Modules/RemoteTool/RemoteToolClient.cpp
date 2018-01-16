@@ -38,7 +38,7 @@ public:
 	TimePoint m_start;
 	int64_t m_taskIndex = 0;
 	ToolInvocation m_invocation;
-	std::string m_originalFilename;
+	ToolInvocation m_originalInvocation;
 	RemoteToolRequest::Ptr m_toolRequest;
 	RemoteToolClient::InvokeCallback m_callback;
 	TimePoint m_expirationMoment;
@@ -49,7 +49,8 @@ public:
 class RemoteToolClientImpl
 {
 public:
-	RemoteToolClient *m_parent; // ugly..
+	RemoteToolClient * m_parent = nullptr; // ugly..
+	IToolInvoker * m_invokerFallback = nullptr;
 	ToolBalancer m_balancer;
 	std::mutex m_clientsMutex;
 	std::deque<SocketFrameHandler::Ptr> m_clients;
@@ -77,22 +78,31 @@ public:
 			TimePoint now(true);
 			for (auto it = m_requests.begin(); it != m_requests.end(); )
 			{
-				if (it->m_expirationMoment < now)
+				RemoteToolRequestWrap & request = *it;
+				if (request.m_expirationMoment > now)
 				{
-					Syslogger(Syslogger::Err) << "Task expired: " << SocketFrame::Ptr(it->m_toolRequest)
-											  << " expiration moment:" << it->m_expirationMoment.ToString() << ", now:" << now.ToString();
-					if (it->m_callback)
+					it++;
+					continue;
+				}
+
+				Syslogger(Syslogger::Err) << "Task expired: " << SocketFrame::Ptr(request.m_toolRequest)
+										  << ", expiration moment:" << request.m_expirationMoment.ToString()
+										  << ", now:" << now.ToString();
+				if (request.m_callback)
+				{
+					if (m_invokerFallback)
+					{
+						Syslogger(Syslogger::Info) << "Using invoker fallback.";
+						m_invokerFallback->InvokeTool(request.m_originalInvocation, request.m_callback);
+					}
+					else
 					{
 						RemoteToolClient::TaskExecutionInfo info;
 						info.m_stdOutput = "Timeout expired.";
-						it->m_callback(info);
+						request.m_callback(info);
 					}
-					it = m_requests.erase(it);
 				}
-				else
-				{
-					it++;
-				}
+				it = m_requests.erase(it);
 			}
 
 			if (m_requests.empty())
@@ -113,7 +123,7 @@ public:
 		auto frameCallback = [this, task, clientIndex](SocketFrame::Ptr responseFrame, SocketFrameHandler::ReplyState state, const std::string & errorInfo)
 		{
 			m_balancer.FinishTask(clientIndex);
-			const std::string outputFilename =  task.m_originalFilename;
+			const std::string outputFilename =  task.m_originalInvocation.GetOutput();
 			Syslogger(Syslogger::Info) << "RECIEVING [" << task.m_taskIndex << "]:" << outputFilename;
 			RemoteToolClient::TaskExecutionInfo info;
 			bool retry = false;
@@ -199,6 +209,11 @@ bool RemoteToolClient::SetConfig(const RemoteToolClient::Config &config)
 	}
 	m_config = config;
 	return true;
+}
+
+void RemoteToolClient::SetInvokerFallback(IToolInvoker *invokerFallback)
+{
+	m_impl->m_invokerFallback = invokerFallback;
 }
 
 int RemoteToolClient::GetFreeRemoteThreads() const
@@ -298,7 +313,7 @@ void RemoteToolClient::InvokeTool(const ToolInvocation & invocation, InvokeCallb
 	wrap.m_toolRequest = toolRequest;
 	wrap.m_taskIndex = m_taskIndex++;
 	wrap.m_invocation = toolRequest->m_invocation;
-	wrap.m_originalFilename = invocation.GetOutput();
+	wrap.m_originalInvocation = invocation;
 	wrap.m_callback = callback;
 	wrap.m_expirationMoment = wrap.m_start + m_config.m_queueTimeout;
 	wrap.m_attemptsRemain = m_config.m_invocationAttempts;
