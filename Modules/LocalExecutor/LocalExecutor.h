@@ -14,6 +14,7 @@
 #pragma once
 #include <ILocalExecutor.h>
 #include <IInvocationRewriter.h>
+#include <IToolInvoker.h>
 #include <ThreadLoop.h>
 
 #include <queue>
@@ -30,7 +31,7 @@ namespace Wuild
 /// Executes command on local host and notifies caller when task finished.
 ///
 /// Uses ninja's SubprocessSet.
-class LocalExecutor : public ILocalExecutor
+class LocalExecutor : public ILocalExecutor, public IToolInvoker
 {
 	LocalExecutor(IInvocationRewriter::Ptr invocationRewriter, const std::string & tempPath);
 public:
@@ -43,6 +44,9 @@ public:
 	StringVector GetToolIds() const override;
 	void SetThreadCount(int threads) override;
 	size_t GetQueueSize() const override;
+
+public:
+	void InvokeTool(const ToolInvocation & invocation, InvokeCallback callback) override;
 
 	~LocalExecutor();
 

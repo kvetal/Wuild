@@ -20,6 +20,7 @@
 #include <RemoteToolClientConfig.h>
 #include <ToolInvocation.h>
 #include <IInvocationRewriter.h>
+#include <IToolInvoker.h>
 
 #include <functional>
 #include <atomic>
@@ -34,25 +35,13 @@ class RemoteToolClientImpl;
  * Recieves remote tool servers list from Coordinator; then connects to all servers.
  * After reciving new task through InvokeTool() - distributes them to servers.
  */
-class RemoteToolClient
+class RemoteToolClient : public IToolInvoker
 {
 	friend class RemoteToolClientImpl;
 public:
-	/// Remote tool execution result.
-	struct TaskExecutionInfo
-	{
-		TimePoint m_toolExecutionTime;
-		TimePoint m_networkRequestTime;
-		std::string GetProfilingStr() const;
 
-		std::string m_stdOutput;
-		bool m_result = false;
-
-		TaskExecutionInfo(const std::string & stdOutput = std::string()) : m_stdOutput(stdOutput) {}
-	};
 	using Config = RemoteToolClientConfig;
 	using RemoteAvailableCallback = std::function<void()>;
-	using InvokeCallback = std::function<void(const TaskExecutionInfo& )>;
 
 public:
 	RemoteToolClient(IInvocationRewriter::Ptr invocationRewriter);
@@ -71,7 +60,7 @@ public:
 	void SetRemoteAvailableCallback(RemoteAvailableCallback callback);
 
 	/// Starts new remote task.
-	void InvokeTool(const ToolInvocation & invocation, InvokeCallback callback);
+	void InvokeTool(const ToolInvocation & invocation, InvokeCallback callback) override;
 
 	std::string GetSessionInformation() const { return m_sessionInfo.ToString(false, true); }
 
@@ -95,7 +84,6 @@ protected:
 	bool m_remoteIsAvailable = false;
 	RemoteAvailableCallback m_remoteAvailableCallback;
 	Config m_config;
-	//StringVector m_requiredToolIds;
 	IInvocationRewriter::Ptr m_invocationRewriter;
 };
 

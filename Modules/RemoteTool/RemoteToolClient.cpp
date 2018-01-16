@@ -119,8 +119,8 @@ public:
 			bool retry = false;
 			if (state == SocketFrameHandler::ReplyState::Timeout)
 			{
-				info.m_stdOutput = "Timeout expired:" + outputFilename + ", start:" + task.m_start.ToString() 
-						+ " exp:" + task.m_expirationMoment.ToString() + ", remain:" + std::to_string(task.m_attemptsRemain) 
+				info.m_stdOutput = "Timeout expired:" + outputFilename + ", start:" + task.m_start.ToString()
+						+ " exp:" + task.m_expirationMoment.ToString() + ", remain:" + std::to_string(task.m_attemptsRemain)
 						+ ", balancer.free:" + std::to_string(m_balancer.GetFreeThreads()) + ", extraInfo:" + errorInfo;
 				retry = true;
 			}
@@ -341,18 +341,5 @@ void RemoteToolClient::AvailableCheck()
 		Syslogger(Syslogger::Notice) << "Recieved info from coordinator: total remote threads=" << total << ", free=" << free;
 	}
 }
-
-std::string RemoteToolClient::TaskExecutionInfo::GetProfilingStr() const
-{
-	std::ostringstream os;
-	auto cus = m_toolExecutionTime.GetUS();
-	auto nus = m_networkRequestTime.GetUS();
-	auto overheadPercent = ((nus - cus) * 100) / (cus ? cus : 1);
-	os << "compilationTime: " << cus << " us., "
-	   << "networkTime: "  << nus << " us., "
-	   << "overhead: " << overheadPercent << "%";
-	return os.str();
-}
-
 
 }

@@ -78,6 +78,23 @@ size_t LocalExecutor::GetQueueSize() const
 	return m_taskQueue.size();
 }
 
+void LocalExecutor::InvokeTool(const ToolInvocation &invocation, IToolInvoker::InvokeCallback callback)
+{
+	LocalExecutorTask::Ptr task(new LocalExecutorTask());
+	task->m_writeInput = task->m_readOutput = false;
+	task->m_invocation = invocation;
+	task->m_callback = [callback](LocalExecutorResult::Ptr result)
+	{
+		TaskExecutionInfo info;
+		info.m_networkRequestTime = 0;
+		info.m_toolExecutionTime = result->m_executionTime;
+		info.m_result = result->m_result;
+		info.m_stdOutput = result->m_stdOut;
+		callback(info);
+	};
+	this->AddTask(task);
+}
+
 LocalExecutor::~LocalExecutor()
 {
 }
