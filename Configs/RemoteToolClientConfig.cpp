@@ -32,6 +32,12 @@ bool RemoteToolClientConfig::Validate(std::ostream *errStream) const
 			*errStream << "invocationAttempts should be at least 1.";
 		return false;
 	}
+	if (m_resetConnectionAttempts <= 0)
+	{
+		if (errStream)
+			*errStream << "resetConnectionAttempts should be at least 1.";
+		return false;
+	}
 	return m_coordinator.Validate(errStream);
 }
 

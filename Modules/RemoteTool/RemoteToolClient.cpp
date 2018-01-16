@@ -177,6 +177,7 @@ public:
 			m_requests.pop_front();
 		}
 	}
+	SocketFrameHandler::Ptr AddClient(const std::string & host, int16_t port);
 };
 
 
@@ -268,17 +269,7 @@ void RemoteToolClient::AddClient(const ToolServerInfo &info, bool start)
 	if (status == ToolBalancer::ClientStatus::Updated)
 		return;
 
-	Syslogger() << "RemoteToolClient::AddClient " << info.m_connectionHost  << ":" <<  info.m_connectionPort;
-
-	SocketFrameHandlerSettings settings;
-	settings.m_channelProtocolVersion       = RemoteToolRequest::s_version + RemoteToolResponse::s_version;
-	settings.m_recommendedRecieveBufferSize = g_recommendedBufferSize;
-	settings.m_recommendedSendBufferSize    = g_recommendedBufferSize;
-	settings.m_segmentSize = 8192;
-	SocketFrameHandler::Ptr handler(new SocketFrameHandler( settings ));
-	handler->RegisterFrameReader(SocketFrameReaderTemplate<RemoteToolResponse>::Create());
-	handler->SetTcpChannel(info.m_connectionHost, info.m_connectionPort);
-
+	auto handler = m_impl->AddClient(info.m_connectionHost, info.m_connectionPort);
 	handler->SetChannelNotifier([&balancer, index, this](bool state){
 		balancer.SetClientActive(index, state);
 		AvailableCheck();
@@ -286,8 +277,26 @@ void RemoteToolClient::AddClient(const ToolServerInfo &info, bool start)
 	if (start)
 	   handler->Start();
 
-	std::lock_guard<std::mutex> lock2(m_impl->m_clientsMutex);
-	m_impl->m_clients.push_back(handler);
+}
+
+SocketFrameHandler::Ptr RemoteToolClientImpl::AddClient(const std::string &host, int16_t port)
+{
+	Syslogger() << "RemoteToolClient::AddClient " << host  << ":" <<  port;
+
+	SocketFrameHandlerSettings settings;
+	settings.m_channelProtocolVersion       = RemoteToolRequest::s_version + RemoteToolResponse::s_version;
+	settings.m_recommendedRecieveBufferSize = g_recommendedBufferSize;
+	settings.m_recommendedSendBufferSize    = g_recommendedBufferSize;
+	settings.m_segmentSize = 8192;
+
+	SocketFrameHandler::Ptr handler(new SocketFrameHandler( settings ));
+	handler->RegisterFrameReader(SocketFrameReaderTemplate<RemoteToolResponse>::Create());
+	handler->SetTcpChannel(host, port);
+
+	std::lock_guard<std::mutex> lock(m_clientsMutex);
+	m_clients.push_back(handler);
+
+	return handler;
 }
 
 void RemoteToolClient::InvokeTool(const ToolInvocation & invocation, InvokeCallback callback)
@@ -326,7 +335,6 @@ void RemoteToolClient::InvokeTool(const ToolInvocation & invocation, InvokeCallb
 
 	m_impl->QueueTask(wrap);
 }
-
 
 void RemoteToolClient::UpdateSessionInfo(const RemoteToolClient::TaskExecutionInfo &executionResult)
 {

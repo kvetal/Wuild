@@ -29,6 +29,8 @@ public:
 	std::string m_clientId;
 	CoordinatorClientConfig m_coordinator;
 	CompressionInfo m_compression;
+	bool m_resetConnectionOnFailure = true;
+	int m_resetConnectionAttempts = 5;
 	bool Validate(std::ostream * errStream = nullptr) const override;
 };
 }

@@ -150,6 +150,9 @@ public:
 	/// Register new frame reader. FrameId should start from s_minimalUserFrameId!
 	void   RegisterFrameReader(IFrameReader::Ptr reader);
 
+	/// Reset all internal data, disconnect and connect socket again
+	void   RestartConnection();
+
 //Logging:
 	void   SetLogContext(const std::string & context);
 	void   UpdateLogContext();
@@ -199,6 +202,7 @@ protected:
 
 	bool                              m_retryConnectOnFail = true;
 	ConnectionState                   m_prevConnectionState = ConnectionState::Pending;
+	bool                              m_needRestartConnection = false;
 
 	StateNotifierCallback             m_stateNotifier;
 	std::atomic_uint_fast64_t         m_transaction {0};

@@ -82,6 +82,14 @@ void SocketFrameHandler::Cancel()
 
 bool SocketFrameHandler::Quant()
 {
+	if (m_needRestartConnection)
+	{
+		m_needRestartConnection = false;
+		DisconnectChannel();
+		m_replyManager.ClearAndSendError();
+		/// WTF...
+	}
+
 	// Each quant, we check connection, if we ok, then read and write frames data.
 	// If false returned, thread will interrupted.
 	ConnectionState connectionState = this->CheckAndCreateConnection() ? ConnectionState::Ok : ConnectionState::Failed;
@@ -106,7 +114,7 @@ bool SocketFrameHandler::Quant()
 	{
 		m_lastTimeoutCheck = TimePoint(true);
 		std::ostringstream os;
-		os << " queue size:" << m_framesQueueOutput.size() 
+		os << " queue size:" << m_framesQueueOutput.size()
 			<< ", outputSegments:" << m_outputSegments.size()
 			<< ", outputAcknowledgesSize:" << m_outputAcknowledgesSize
 			<< ", bytesWaitingAcknowledge:" << m_bytesWaitingAcknowledge
@@ -175,6 +183,11 @@ void SocketFrameHandler::RegisterFrameReader(SocketFrameHandler::IFrameReader::P
 		throw std::logic_error("Frame reader already exists.");
 
    m_frameReaders[reader->FrameTypeId()] = reader;
+}
+
+void SocketFrameHandler::RestartConnection()
+{
+	m_needRestartConnection = true;
 }
 
 void SocketFrameHandler::SetLogContext(const std::string &context)

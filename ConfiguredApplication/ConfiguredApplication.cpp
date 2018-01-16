@@ -308,6 +308,9 @@ void ConfiguredApplication::ReadRemoteToolClientConfig()
 	if (requestTimeoutMS)
 		m_remoteToolClientConfig.m_requestTimeout = TimePoint(requestTimeoutMS / 1000.);
 
+	m_remoteToolClientConfig.m_resetConnectionAttempts = m_config->GetInt(defaultGroup, "resetConnectionAttempts", m_remoteToolClientConfig.m_resetConnectionAttempts);
+	m_remoteToolClientConfig.m_resetConnectionOnFailure = m_config->GetBool(defaultGroup, "resetConnectionOnFailure", m_remoteToolClientConfig.m_resetConnectionOnFailure);
+
 	ReadCoordinatorClientConfig(m_remoteToolClientConfig.m_coordinator, defaultGroup);
 	m_remoteToolClientConfig.m_coordinator.m_redundance = CoordinatorClientConfig::Redundance::Any;
 	ReadCompressionConfig(m_remoteToolClientConfig.m_compression, defaultGroup);
