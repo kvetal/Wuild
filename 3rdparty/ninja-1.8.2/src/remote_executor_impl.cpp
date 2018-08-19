@@ -96,7 +96,7 @@ bool RemoteExecutor::PreprocessCode(const std::vector<std::string> &originalRule
     if (!m_invocationRewriter->SplitInvocation(original, pp, cc, &toolId))
         return false;
 
-    preprocessRule.push_back(srcExecutable + "  ");
+	preprocessRule.push_back(pp.m_id.m_toolExecutable + "  ");
     preprocessRule.insert(preprocessRule.end(), pp.m_args.begin(), pp.m_args.end());
 
     compileRule.push_back(srcExecutable + "  ");

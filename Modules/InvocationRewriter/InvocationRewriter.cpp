@@ -54,6 +54,7 @@ bool InvocationRewriter::SplitInvocation(const ToolInvocation & original, ToolIn
 	toolInfo.m_parser->SetInvokeType(ToolInvocation::InvokeType::Preprocess);
 	toolInfo.m_parser->RemoveLocalFlags();
 	preprocessor = toolInfo.m_parser->GetToolInvocation();
+	preprocessor.m_id = CompileInfoByToolId("clang60_cpp").m_id; // @todo:
 
 	toolInfo.m_parser->SetToolInvocation(origComplete);
 	toolInfo.m_parser->RemoveLocalFlags();

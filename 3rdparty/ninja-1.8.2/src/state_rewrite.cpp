@@ -80,6 +80,7 @@ void RewriteStateRules(State *state, IRemoteExecutor * const remoteExecutor)
             auto & CCtokens = ruleCC->GetBinding("command")->parsed_;
             PPtokens.clear();
             CCtokens.clear();
+
             stringVectorToBindings(preprocessRule, PPtokens);
             stringVectorToBindings(compileRule, CCtokens);
 
